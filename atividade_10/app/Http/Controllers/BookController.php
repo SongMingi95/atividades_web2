@@ -101,16 +101,22 @@ class BookController extends Controller
         return redirect()->route('books.index')->with('success', 'Livro atualizado com sucesso!');
     }
     
-
     public function show(Book $book)
-{
-    $this->authorize('view', $book); // <--- adicione esta linha
-
-    $book->load(['author', 'publisher', 'category']);
-    $users = User::all();
-
-    return view('books.show', compact('book','users'));
-}
+    {
+        $this->authorize('view', $book);
+    
+        $book->load(['author', 'publisher', 'category']);
+        $users = User::all();
+    
+        // Verifica se há empréstimo aberto para o livro
+        $emprestimoAberto = DB::table('borrowings')
+            ->where('book_id', $book->id)
+            ->whereNull('returned_at')
+            ->exists();
+    
+        return view('books.show', compact('book', 'users', 'emprestimoAberto'));
+    }
+    
 
 
     public function index()
@@ -138,10 +144,11 @@ public function borrow(Request $request, Book $book)
     ]);
 
     // Verifica se já existe um empréstimo em aberto (returned_at = null)
-    $jaEmprestado = DB::table('book_user')
-        ->where('book_id', $book->id)
-        ->whereNull('returned_at')
-        ->exists();
+    $jaEmprestado = DB::table('borrowings')
+    ->where('book_id', $book->id)
+    ->whereNull('returned_at')
+    ->exists();
+
 
     if ($jaEmprestado) {
         return back()->withErrors(['erro' => 'Este livro já está emprestado e ainda não foi devolvido.']);

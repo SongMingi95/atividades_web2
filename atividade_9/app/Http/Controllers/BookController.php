@@ -138,7 +138,7 @@ public function borrow(Request $request, Book $book)
     ]);
 
     // Verifica se já existe um empréstimo em aberto (returned_at = null)
-    $jaEmprestado = DB::table('book_user')
+    $jaEmprestado = DB::table('borrowings')
         ->where('book_id', $book->id)
         ->whereNull('returned_at')
         ->exists();
@@ -155,5 +155,6 @@ public function borrow(Request $request, Book $book)
 
     return back()->with('success', 'Empréstimo registrado com sucesso!');
 }
+
 
 }
